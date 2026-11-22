@@ -2,8 +2,8 @@
  * Google Gemini REST API client & settings persistence (Pure ESM, client-side).
  */
 
-export const DEFAULT_MODEL = 'gemini-2.5-flash';
-export const PRESET_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+export const DEFAULT_MODEL = 'gemini-3.8-flash';
+export const PRESET_MODELS = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
 
 const SETTINGS_STORAGE_KEY = 'fcs_settings';
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
