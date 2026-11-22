@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI &amp; Manual Flashcard Studio</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232563eb'/%3E%3Crect x='7' y='9' width='18' height='14' rx='3' fill='none' stroke='%23ffffff' stroke-width='2.2'/%3E%3Cpath d='M11 14h10M11 18h6' stroke='%23ffffff' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Top Application Header -->
+    <header class="app-header">
+      <div class="header-inner">
+        <div class="app-brand">
+          <span class="brand-logo" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="5" width="18" height="14" rx="3"></rect>
+              <path d="M7 10h10"></path>
+              <path d="M7 14h6"></path>
+            </svg>
+          </span>
+          <span class="brand-text">AI &amp; Manual Flashcard Studio</span>
+        </div>
+
+        <nav class="nav-tabs" aria-label="Main Navigation">
+          <button type="button" class="nav-tab active" data-view="dashboard">Dashboard</button>
+          <button type="button" class="nav-tab" data-view="create">Create</button>
+          <button type="button" class="nav-tab" data-view="history">History</button>
+          <button type="button" class="nav-tab" data-view="settings">Settings</button>
+        </nav>
+
+        <div class="header-actions">
+          <button id="theme-toggle-btn" class="btn btn-icon" type="button" aria-label="Toggle theme" title="Toggle Light/Dark Theme"></button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Views -->
+    <main class="app-main">
+      <!-- 1. Dashboard View -->
+      <section id="view-dashboard" class="view active">
+        <div class="view-toolbar">
+          <div class="view-title-group">
+            <h1 class="view-title">Study Dashboard</h1>
+            <p class="view-subtitle">Organize decks, track due cards, and launch spaced-repetition sessions.</p>
+          </div>
+          <div class="toolbar-actions">
+            <button id="btn-load-sample-dash" type="button" class="btn btn-secondary">Load Sample Data</button>
+            <button id="btn-new-deck" type="button" class="btn btn-primary">+ New Deck</button>
+          </div>
+        </div>
+
+        <div class="stats-bar">
+          <div class="stat-card">
+            <span class="stat-label">Total Decks</span>
+            <strong id="stat-total-decks" class="stat-value">0</strong>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Total Cards</span>
+            <strong id="stat-total-cards" class="stat-value">0</strong>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Due Now</span>
+            <strong id="stat-due-cards" class="stat-value stat-accent">0</strong>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Reviewed Today</span>
+            <strong id="stat-reviewed-today" class="stat-value">0</strong>
+          </div>
+        </div>
+
+        <!-- Deck List Panel -->
+        <div id="deck-list-panel">
+          <div id="decks-grid" class="decks-grid"></div>
+          <div id="decks-empty" class="empty-state" hidden>
+            <p class="empty-title">No flashcard decks yet</p>
+            <p class="empty-desc">Create your first deck or click "Load Sample Data" to explore Basic, Cloze, and Image Occlusion cards.</p>
+          </div>
+        </div>
+
+        <!-- Deck Detail Panel -->
+        <div id="deck-detail-panel" class="deck-detail-panel" hidden>
+          <div class="detail-topbar">
+            <button id="btn-back-to-decks" type="button" class="btn btn-ghost">← Back to Decks</button>
+          </div>
+
+          <div class="detail-header-card">
+            <div class="detail-info">
+              <h2 id="detail-deck-name" class="detail-title"></h2>
+              <p id="detail-deck-desc" class="detail-desc"></p>
+              <div id="detail-deck-meta" class="meta-row"></div>
+            </div>
+            <div class="detail-actions">
+              <button id="btn-study-deck" type="button" class="btn btn-primary">Study Due</button>
+              <button id="btn-study-all-deck" type="button" class="btn btn-secondary">Practice All</button>
+              <button id="btn-add-card-to-deck" type="button" class="btn btn-secondary">+ Add Card</button>
+              <button id="btn-edit-deck" type="button" class="btn btn-ghost">Edit</button>
+              <button id="btn-delete-deck" type="button" class="btn btn-danger-ghost">Delete</button>
+            </div>
+          </div>
+
+          <div class="filter-toolbar">
+            <input id="card-search-input" type="search" class="input search-input" placeholder="Search cards in deck...">
+            <div class="filter-pills" role="group" aria-label="Filter cards by source">
+              <button type="button" class="filter-pill active" data-filter="all">All</button>
+              <button type="button" class="filter-pill" data-filter="manual">Manual</button>
+              <button type="button" class="filter-pill" data-filter="ai">AI</button>
+            </div>
+          </div>
+
+          <div id="deck-cards-list" class="cards-list"></div>
+          <div id="deck-cards-empty" class="empty-state" hidden>
+            <p class="empty-title">No cards match your filter</p>
+            <p class="empty-desc">Try clearing the search query or add a new card to this deck.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. Create View -->
+      <section id="view-create" class="view" hidden>
+        <div class="view-toolbar">
+          <div class="view-title-group">
+            <h1 class="view-title">Create Flashcards</h1>
+            <p class="view-subtitle">Build cards manually or generate structured study material from PDFs and notes with Gemini AI.</p>
+          </div>
+          <div class="mode-segmented" role="tablist" aria-label="Creation mode">
+            <button type="button" class="mode-btn active" data-create-mode="manual">Manual Mode</button>
+            <button type="button" class="mode-btn" data-create-mode="ai">AI Generator Mode</button>
+          </div>
+        </div>
+
+        <!-- Target Deck Selector -->
+        <div class="target-deck-bar">
+          <label for="create-deck-select" class="field-label">Target Deck</label>
+          <div class="target-deck-controls">
+            <select id="create-deck-select" class="input select"></select>
+            <button id="btn-quick-new-deck" type="button" class="btn btn-secondary">+ New Deck</button>
+          </div>
+        </div>
+
+        <!-- Manual Mode Panel -->
+        <div id="create-manual-panel" class="studio-panel">
+          <div class="type-tabs" role="tablist" aria-label="Manual card type">
+            <button type="button" class="type-tab active" data-manual-type="basic">Basic</button>
+            <button type="button" class="type-tab" data-manual-type="cloze">Cloze</button>
+            <button type="button" class="type-tab" data-manual-type="occlusion">Image Occlusion</button>
+          </div>
+
+          <!-- Basic Fields -->
+          <div id="manual-basic-fields" class="form-stack">
+            <div class="field-group">
+              <label for="manual-basic-front" class="field-label">Front / Question</label>
+              <textarea id="manual-basic-front" class="input textarea" rows="3" placeholder="Front / Question..."></textarea>
+            </div>
+            <div class="field-group">
+              <label for="manual-basic-back" class="field-label">Back / Answer</label>
+              <textarea id="manual-basic-back" class="input textarea" rows="3" placeholder="Back / Answer..."></textarea>
+            </div>
+          </div>
+
+          <!-- Cloze Fields -->
+          <div id="manual-cloze-fields" class="form-stack" hidden>
+            <div class="field-header-row">
+              <label for="manual-cloze-text" class="field-label">Cloze Sentence</label>
+              <button id="btn-wrap-cloze" type="button" class="btn btn-secondary btn-sm">Convert Highlight to {{c1::...}}</button>
+            </div>
+            <textarea id="manual-cloze-text" class="input textarea" rows="4" placeholder="Type sentence, highlight keyword, and click button..."></textarea>
+            <div class="field-group">
+              <label for="manual-cloze-extra" class="field-label">Extra Explanation (Optional)</label>
+              <input id="manual-cloze-extra" type="text" class="input" placeholder="Extra explanation / Back (optional)">
+            </div>
+            <div class="field-group">
+              <span class="field-label">Live Preview</span>
+              <div id="manual-cloze-preview" class="cloze-preview-box"></div>
+            </div>
+          </div>
+
+          <!-- Image Occlusion Fields -->
+          <div id="manual-occlusion-fields" class="form-stack" hidden>
+            <div class="upload-toolbar">
+              <input id="manual-image-upload" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+              <label for="manual-image-upload" class="btn btn-secondary">Upload Image (.png/.jpg)</label>
+              <input id="manual-pdf-upload" type="file" accept="application/pdf" hidden>
+              <label for="manual-pdf-upload" class="btn btn-secondary">Choose PDF Page</label>
+            </div>
+            <div class="two-col-grid">
+              <div class="field-group">
+                <label for="manual-occlusion-title" class="field-label">Card Prompt / Title</label>
+                <input id="manual-occlusion-title" type="text" class="input" placeholder="Card prompt / title (e.g. Identify labeled structures)">
+              </div>
+              <div class="field-group">
+                <label for="manual-occlusion-note" class="field-label">Extra Note (Optional)</label>
+                <input id="manual-occlusion-note" type="text" class="input" placeholder="Extra note / Back (optional)">
+              </div>
+            </div>
+            <div id="manual-canvas-container" class="canvas-editor-host"></div>
+          </div>
+
+          <div class="panel-footer">
+            <button id="btn-save-manual-card" type="button" class="btn btn-primary btn-lg">Save Card to Deck</button>
+          </div>
+        </div>
+
+        <!-- AI Generator Mode Panel -->
+        <div id="create-ai-panel" class="studio-panel" hidden>
+          <div class="subtab-row" role="tablist" aria-label="AI source material">
+            <button type="button" class="subtab-btn active" data-ai-source="pdf">Upload PDF</button>
+            <button type="button" class="subtab-btn" data-ai-source="text">Paste Text</button>
+          </div>
+
+          <!-- PDF Source Box -->
+          <div id="ai-source-pdf-box" class="source-box">
+            <div class="upload-toolbar">
+              <input id="ai-pdf-upload" type="file" accept="application/pdf" hidden>
+              <label for="ai-pdf-upload" class="btn btn-secondary">Upload PDF (.pdf)</label>
+              <span id="ai-pdf-filename" class="file-badge">No PDF loaded</span>
+            </div>
+            <div id="ai-pdf-controls" class="pdf-selection-controls" hidden>
+              <button id="btn-ai-pdf-select-all" type="button" class="btn btn-ghost btn-sm">Select All</button>
+              <button id="btn-ai-pdf-deselect-all" type="button" class="btn btn-ghost btn-sm">Deselect All</button>
+              <span id="ai-pdf-selected-count" class="hint-text">0 pages selected</span>
+            </div>
+            <div id="ai-pdf-thumbnails" class="pdf-thumb-grid"></div>
+          </div>
+
+          <!-- Raw Text Source Box -->
+          <div id="ai-source-text-box" class="source-box" hidden>
+            <label for="ai-raw-text" class="field-label">Study Notes or Article Text</label>
+            <textarea id="ai-raw-text" class="input textarea" rows="6" placeholder="Paste summary, article, or notes here..."></textarea>
+          </div>
+
+          <!-- AI Generation Type -->
+          <div class="field-group">
+            <span class="field-label">Generation Mode</span>
+            <div class="type-tabs" role="tablist" aria-label="AI generation type">
+              <button type="button" class="type-tab active" data-ai-type="text-cloze">AI Text &amp; Cloze</button>
+              <button type="button" class="type-tab" data-ai-type="occlusion">AI Auto Image Occlusion</button>
+            </div>
+          </div>
+
+          <!-- Extra Standalone Image Option for Vision Occlusion -->
+          <div id="ai-vision-extra-row" class="vision-extra-row" hidden>
+            <input id="ai-vision-image-upload" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+            <label for="ai-vision-image-upload" class="btn btn-secondary btn-sm">Or Upload Image Directly</label>
+            <span id="ai-vision-image-name" class="hint-text">Select PDF pages above or upload an image</span>
+          </div>
+
+          <!-- Custom Instruction & Parameters -->
+          <div class="form-stack">
+            <div class="field-group">
+              <label for="ai-custom-instruction" class="field-label">Custom Instruction (Optional)</label>
+              <textarea id="ai-custom-instruction" class="input textarea" rows="3" placeholder="Custom Instruction (e.g. 'สร้างเฉพาะคำถามกลไกการออกฤทธิ์และข้อควรระวัง' or 'Focus on English-Thai vocabulary')"></textarea>
+            </div>
+
+            <div class="two-col-grid">
+              <div class="field-group">
+                <label for="ai-card-count" class="field-label">Target Card Count</label>
+                <input id="ai-card-count" type="number" class="input" min="1" max="30" value="6">
+              </div>
+              <div class="field-group">
+                <label for="ai-language" class="field-label">Output Language</label>
+                <select id="ai-language" class="input select">
+                  <option value="Thai">Thai (ภาษาไทย)</option>
+                  <option value="English">English</option>
+                  <option value="Thai & English (Bilingual)">Thai &amp; English (Bilingual)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-footer">
+            <button id="btn-ai-generate" type="button" class="btn btn-primary btn-lg">Generate with Gemini AI</button>
+          </div>
+
+          <!-- Status Banners -->
+          <div id="ai-loading" class="loading-banner" hidden>
+            <span class="spinner" aria-hidden="true"></span>
+            <span id="ai-loading-text">Processing...</span>
+          </div>
+          <div id="ai-error-box" class="error-banner" role="alert" hidden></div>
+
+          <!-- AI Preview & Review Section -->
+          <div id="ai-preview-section" class="ai-preview-section" hidden>
+            <div class="preview-toolbar">
+              <div class="preview-toolbar-left">
+                <span id="ai-preview-count" class="badge"></span>
+                <button id="btn-ai-select-all-preview" type="button" class="btn btn-ghost btn-sm">Toggle Select All</button>
+                <button id="btn-ai-clear-preview" type="button" class="btn btn-ghost btn-sm">Clear Preview</button>
+              </div>
+              <button id="btn-ai-save-selected" type="button" class="btn btn-primary">Save Selected to Deck</button>
+            </div>
+            <div id="ai-preview-list" class="preview-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. History View -->
+      <section id="view-history" class="view" hidden>
+        <div class="view-toolbar">
+          <div class="view-title-group">
+            <h1 class="view-title">Study History &amp; Analytics</h1>
+            <p class="view-subtitle">Monitor daily consistency, accuracy trends, and back up your workspace.</p>
+          </div>
+          <div class="toolbar-actions">
+            <button id="btn-export-json" type="button" class="btn btn-secondary">Export All (.json)</button>
+            <input id="import-json-input" type="file" accept="application/json,.json" hidden>
+            <label for="import-json-input" class="btn btn-secondary">Import Backup (.json)</label>
+          </div>
+        </div>
+
+        <div id="history-dashboard-mount"></div>
+      </section>
+
+      <!-- 4. Settings View -->
+      <section id="view-settings" class="view" hidden>
+        <div class="view-toolbar">
+          <div class="view-title-group">
+            <h1 class="view-title">Settings</h1>
+            <p class="view-subtitle">Configure your Gemini API key, display theme, and local storage backups.</p>
+          </div>
+        </div>
+
+        <div class="settings-grid">
+          <!-- Gemini API Card -->
+          <section class="settings-card">
+            <h2 class="settings-card-title">Gemini API Configuration</h2>
+            <p class="settings-card-desc">Your API key is stored locally in your browser and sent only to Google Gemini endpoints.</p>
+
+            <div class="form-stack">
+              <div class="field-group">
+                <label for="setting-api-key" class="field-label">Gemini API Key</label>
+                <div class="input-with-action">
+                  <input id="setting-api-key" type="password" class="input" placeholder="Enter your Gemini API Key (AIza...)">
+                  <button id="btn-toggle-api-key" type="button" class="btn btn-ghost btn-sm">Show</button>
+                </div>
+              </div>
+
+              <div class="field-group">
+                <label for="setting-model-select" class="field-label">Gemini Model</label>
+                <select id="setting-model-select" class="input select">
+                  <option value="gemini-2.5-flash">gemini-2.5-flash (Default)</option>
+                  <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite</option>
+                  <option value="__custom__">Custom model...</option>
+                </select>
+              </div>
+
+              <div id="setting-custom-model-row" class="field-group" hidden>
+                <label for="setting-custom-model" class="field-label">Custom Model ID</label>
+                <input id="setting-custom-model" type="text" class="input" placeholder="e.g. gemini-2.5-pro">
+              </div>
+
+              <div class="settings-card-actions">
+                <button id="btn-save-settings" type="button" class="btn btn-primary">Save API Settings</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- Theme Card -->
+          <section class="settings-card">
+            <h2 class="settings-card-title">Appearance</h2>
+            <p class="settings-card-desc">Switch between crisp Light Mode and comfortable Dark Mode.</p>
+            <div class="settings-btn-row">
+              <button id="btn-theme-light" type="button" class="btn btn-secondary">Light Mode</button>
+              <button id="btn-theme-dark" type="button" class="btn btn-secondary">Dark Mode</button>
+            </div>
+          </section>
+
+          <!-- Data & Demo Card -->
+          <section class="settings-card">
+            <h2 class="settings-card-title">Data &amp; Backup Management</h2>
+            <p class="settings-card-desc">Load sample decks, export a full JSON snapshot, or reset all browser data.</p>
+            <div class="settings-btn-wrap">
+              <button id="btn-load-sample-settings" type="button" class="btn btn-secondary">Load Sample Data</button>
+              <button id="btn-export-json-settings" type="button" class="btn btn-secondary">Export Backup (.json)</button>
+              <button id="btn-import-json-settings" type="button" class="btn btn-secondary">Import Backup (.json)</button>
+              <button id="btn-clear-all-data" type="button" class="btn btn-danger">Clear All Data</button>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <!-- 5. Study View -->
+      <section id="view-study" class="view study-view" hidden>
+        <div class="study-topbar">
+          <button id="btn-exit-study" type="button" class="btn btn-ghost">← Exit Study</button>
+          <h2 id="study-deck-title" class="study-deck-title"></h2>
+          <span id="study-progress-text" class="badge"></span>
+        </div>
+
+        <div class="progress-track" aria-label="Study session progress">
+          <div id="study-progress-fill" class="progress-fill"></div>
+        </div>
+
+        <div id="study-card-stage" class="study-card-stage">
+          <div class="study-card-meta">
+            <span id="study-card-type-badge" class="badge"></span>
+            <span id="study-card-source-badge" class="badge"></span>
+          </div>
+
+          <div id="study-card-content" class="study-card-body"></div>
+
+          <div id="study-actions" class="study-actions">
+            <button id="btn-show-answer" type="button" class="btn btn-primary btn-lg">Show Answer</button>
+
+            <div id="study-occlusion-controls" class="study-occlusion-controls" hidden>
+              <button id="btn-study-reveal-next" type="button" class="btn btn-secondary">Reveal Next Box</button>
+              <button id="btn-study-reveal-all" type="button" class="btn btn-primary">Reveal All</button>
+            </div>
+
+            <div id="study-rating-buttons" class="rating-grid" hidden>
+              <button type="button" class="rating-btn rating-1" data-rating="1">
+                <span class="rating-label">Again</span>
+                <span class="rating-interval" id="interval-1">-</span>
+              </button>
+              <button type="button" class="rating-btn rating-2" data-rating="2">
+                <span class="rating-label">Hard</span>
+                <span class="rating-interval" id="interval-2">-</span>
+              </button>
+              <button type="button" class="rating-btn rating-3" data-rating="3">
+                <span class="rating-label">Good</span>
+                <span class="rating-interval" id="interval-3">-</span>
+              </button>
+              <button type="button" class="rating-btn rating-4" data-rating="4">
+                <span class="rating-label">Easy</span>
+                <span class="rating-interval" id="interval-4">-</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="study-complete-panel" class="study-complete-panel" hidden>
+          <div id="study-complete-summary" class="study-complete-summary"></div>
+          <button id="btn-study-finish" type="button" class="btn btn-primary">Return to Deck</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modals -->
+  <!-- Deck Create / Edit Modal -->
+  <div id="modal-deck" class="modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="deck-modal-title">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="deck-modal-title" class="modal-title">New Deck</h3>
+      </div>
+      <form id="deck-modal-form" class="modal-form">
+        <div class="modal-body form-stack">
+          <div class="field-group">
+            <label for="deck-name-input" class="field-label">Deck Name</label>
+            <input id="deck-name-input" type="text" class="input" required placeholder="e.g. Pharmacology Week 3">
+          </div>
+          <div class="field-group">
+            <label for="deck-desc-input" class="field-label">Description (Optional)</label>
+            <textarea id="deck-desc-input" class="input textarea" rows="3" placeholder="Brief summary of topics covered in this deck..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="btn-deck-modal-cancel" type="button" class="btn btn-ghost">Cancel</button>
+          <button id="btn-deck-modal-save" type="submit" class="btn btn-primary">Save Deck</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Card Modal -->
+  <div id="modal-edit-card" class="modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="edit-card-modal-heading">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <h3 id="edit-card-modal-heading" class="modal-title">Edit Flashcard</h3>
+        <span id="edit-card-type-badge" class="badge"></span>
+      </div>
+      <div class="modal-body form-stack">
+        <!-- Basic Fields -->
+        <div id="edit-card-basic-fields" class="form-stack" hidden>
+          <div class="field-group">
+            <label for="edit-card-front" class="field-label">Front / Question</label>
+            <textarea id="edit-card-front" class="input textarea" rows="3" placeholder="Front / Question..."></textarea>
+          </div>
+          <div class="field-group">
+            <label for="edit-card-back" class="field-label">Back / Answer</label>
+            <textarea id="edit-card-back" class="input textarea" rows="3" placeholder="Back / Answer..."></textarea>
+          </div>
+        </div>
+
+        <!-- Cloze Fields -->
+        <div id="edit-card-cloze-fields" class="form-stack" hidden>
+          <div class="field-header-row">
+            <label for="edit-card-cloze-text" class="field-label">Cloze Text</label>
+            <button id="btn-edit-wrap-cloze" type="button" class="btn btn-secondary btn-sm">Convert Highlight to {{c1::...}}</button>
+          </div>
+          <textarea id="edit-card-cloze-text" class="input textarea" rows="4" placeholder="Cloze text..."></textarea>
+          <div class="field-group">
+            <label for="edit-card-cloze-extra" class="field-label">Extra Explanation (Optional)</label>
+            <input id="edit-card-cloze-extra" type="text" class="input" placeholder="Extra explanation / Back (optional)">
+          </div>
+        </div>
+
+        <!-- Occlusion Fields -->
+        <div id="edit-card-occlusion-fields" class="form-stack" hidden>
+          <div class="two-col-grid">
+            <div class="field-group">
+              <label for="edit-card-occlusion-title" class="field-label">Card Prompt / Title</label>
+              <input id="edit-card-occlusion-title" type="text" class="input" placeholder="Card prompt / title">
+            </div>
+            <div class="field-group">
+              <label for="edit-card-occlusion-note" class="field-label">Extra Note (Optional)</label>
+              <input id="edit-card-occlusion-note" type="text" class="input" placeholder="Extra note / Back (optional)">
+            </div>
+          </div>
+          <div id="edit-card-canvas-container" class="canvas-editor-host"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-edit-card-cancel" type="button" class="btn btn-ghost">Cancel</button>
+        <button id="btn-edit-card-save" type="button" class="btn btn-primary">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manual PDF Page Picker Modal -->
+  <div id="modal-pdf-picker" class="modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="pdf-picker-title">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <h3 id="pdf-picker-title" class="modal-title">Choose a PDF Page</h3>
+      </div>
+      <div class="modal-body">
+        <div id="manual-pdf-thumbnails" class="pdf-thumb-grid"></div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-pdf-picker-close" type="button" class="btn btn-ghost">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Canvas Edit Modal -->
+  <div id="modal-ai-canvas" class="modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="ai-modal-title">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <h3 id="ai-modal-title" class="modal-title">Adjust Occlusion Boxes</h3>
+      </div>
+      <div class="modal-body">
+        <div id="ai-modal-canvas-container" class="canvas-editor-host"></div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-ai-canvas-cancel" type="button" class="btn btn-ghost">Cancel</button>
+        <button id="btn-ai-canvas-save" type="button" class="btn btn-primary">Save Boxes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Action Modal -->
+  <div id="modal-confirm" class="modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-header">
+        <h3 id="confirm-modal-title" class="modal-title">Confirm Action</h3>
+      </div>
+      <div class="modal-body">
+        <p id="confirm-modal-message" class="confirm-message"></p>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-confirm-cancel" type="button" class="btn btn-ghost">Cancel</button>
+        <button id="btn-confirm-ok" type="button" class="btn btn-danger">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notifications -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>
