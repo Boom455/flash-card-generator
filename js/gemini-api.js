@@ -171,7 +171,12 @@ export async function callGeminiAPI({ apiKey, model, contents, systemInstruction
       : systemInstruction;
   }
   if (generationConfig && typeof generationConfig === 'object') {
-    payload.generationConfig = generationConfig;
+    const nextConfig = { ...generationConfig };
+    // Reduce latency on Gemini 3.x reasoning models while keeping structured JSON accurate
+    if (resolvedModel.startsWith('gemini-3') && !nextConfig.thinkingConfig) {
+      nextConfig.thinkingConfig = { thinkingLevel: 'low' };
+    }
+    payload.generationConfig = nextConfig;
   }
 
   const response = await fetch(endpoint, {

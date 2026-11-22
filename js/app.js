@@ -998,28 +998,39 @@ async function handleAiGenerate() {
         );
       }
 
-      const generated = [];
-      for (let i = 0; i < imagesToAnalyze.length; i++) {
-        const item = imagesToAnalyze[i];
-        loadingTextEl.textContent = `Detecting occlusion labels on image ${i + 1}/${imagesToAnalyze.length} with ${model}...`;
-        const res = await generateImageOcclusionBoxes({
-          imageDataUrl: item.imageDataUrl,
-          customInstruction,
-          language,
-          apiKey,
-          model,
-        });
+      const generated = new Array(imagesToAnalyze.length);
+      const concurrency = Math.min(3, imagesToAnalyze.length);
+      let nextIdx = 0;
+      let completed = 0;
 
-        generated.push({
-          tempId: generateId(),
-          selected: true,
-          type: 'occlusion',
-          front: res.title || item.label,
-          back: '',
-          imageDataUrl: item.imageDataUrl,
-          occlusions: res.occlusions || [],
-        });
-      }
+      loadingTextEl.textContent = `Detecting occlusion labels (0/${imagesToAnalyze.length}) with ${model}...`;
+
+      const worker = async () => {
+        while (nextIdx < imagesToAnalyze.length) {
+          const i = nextIdx++;
+          const item = imagesToAnalyze[i];
+          const res = await generateImageOcclusionBoxes({
+            imageDataUrl: item.imageDataUrl,
+            customInstruction,
+            language,
+            apiKey,
+            model,
+          });
+          generated[i] = {
+            tempId: generateId(),
+            selected: true,
+            type: 'occlusion',
+            front: res.title || item.label,
+            back: '',
+            imageDataUrl: item.imageDataUrl,
+            occlusions: res.occlusions || [],
+          };
+          completed += 1;
+          loadingTextEl.textContent = `Detecting occlusion labels (${completed}/${imagesToAnalyze.length}) with ${model}...`;
+        }
+      };
+
+      await Promise.all(Array.from({ length: concurrency }, () => worker()));
 
       state.aiPreviewItems = generated;
     }
